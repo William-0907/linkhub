@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign in · LinkHub{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-8">
+      <a href="{% url 'landing' %}" class="inline-flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+        <i class="fa-solid fa-link text-indigo-400"></i>
+        <span>Link<span class="gradient-text">Hub</span></span>
+      </a>
+      <p class="text-slate-400 mt-2 text-sm">Welcome back. Sign in to manage your links.</p>
+    </div>
+
+    <div class="fade-up glass rounded-3xl p-8 shadow-2xl">
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="rounded-xl bg-red-950/60 border border-red-500/30 px-4 py-3 text-sm text-red-300">
+          {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div>
+          <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-slate-300 mb-1.5">Username</label>
+          {{ form.username }}
+          {% for error in form.username.errors %}
+          <p class="text-red-400 text-xs mt-1">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+          {{ form.password }}
+          {% for error in form.password.errors %}
+          <p class="text-red-400 text-xs mt-1">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <button type="submit"
+          class="btn-gradient w-full rounded-2xl px-4 py-3.5 font-semibold text-white">
+          Sign in
+        </button>
+      </form>
+    </div>
+
+    <p class="text-center text-sm text-slate-400 mt-6">
+      Don't have an account?
+      <a href="{% url 'register' %}" class="text-indigo-400 hover:text-indigo-300 font-medium">Create one</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

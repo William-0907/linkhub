@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}LinkHub · One link, all your links{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4">
+
+  <!-- Nav -->
+  <nav class="flex items-center justify-between py-6">
+    <a href="{% url 'landing' %}" class="inline-flex items-center gap-2 text-xl font-extrabold tracking-tight">
+      <i class="fa-solid fa-link text-indigo-400"></i>
+      <span>Link<span class="gradient-text">Hub</span></span>
+    </a>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'login' %}"
+        class="glass glass-hover rounded-xl px-4 py-2.5 text-sm font-medium text-slate-300 transition-all">
+        Sign in
+      </a>
+      <a href="{% url 'register' %}"
+        class="btn-gradient rounded-xl px-4 py-2.5 text-sm font-semibold text-white">
+        Get started
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="text-center pt-16 pb-20">
+    <div class="fade-up inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs font-medium text-indigo-300 mb-6">
+      <i class="fa-solid fa-sparkles text-indigo-400"></i>
+      Free forever · No credit card
+    </div>
+
+    <h1 class="fade-up text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] mb-6" style="animation-delay: 80ms">
+      One link.<br>
+      <span class="gradient-text">All your links.</span>
+    </h1>
+
+    <p class="fade-up text-lg text-slate-400 max-w-xl mx-auto mb-10" style="animation-delay: 160ms">
+      Your bio is prime real estate. Share everything you do with a single,
+      beautiful LinkHub page — and see who's clicking.
+    </p>
+
+    <div class="fade-up flex items-center justify-center gap-4" style="animation-delay: 240ms">
+      <a href="{% url 'register' %}"
+        class="btn-gradient rounded-2xl px-8 py-4 text-base font-bold text-white">
+        Claim your page
+      </a>
+      <a href="{% url 'login' %}"
+        class="glass glass-hover rounded-2xl px-8 py-4 text-base font-semibold text-slate-200 transition-all">
+        Sign in
+      </a>
+    </div>
+
+    <!-- Mock profile card -->
+    <div class="fade-up mt-16 mx-auto max-w-xs text-left" style="animation-delay: 340ms">
+      <div class="glass rounded-3xl p-6 shadow-2xl">
+        <div class="flex flex-col items-center mb-5">
+          <div class="h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-2xl font-bold text-white mb-3 shadow-lg">
+            A
+          </div>
+          <p class="font-bold">@alex</p>
+          <p class="text-xs text-slate-400">designer · creator · builder</p>
+        </div>
+        <div class="space-y-2.5">
+          <div class="glass glass-hover rounded-xl px-4 py-3 flex items-center gap-3 transition-all hover:translate-x-1">
+            <i class="fa-brands fa-youtube text-red-500 w-5"></i>
+            <span class="text-sm font-medium">My YouTube</span>
+          </div>
+          <div class="glass glass-hover rounded-xl px-4 py-3 flex items-center gap-3 transition-all hover:translate-x-1">
+            <i class="fa-brands fa-instagram text-pink-500 w-5"></i>
+            <span class="text-sm font-medium">Instagram</span>
+          </div>
+          <div class="glass glass-hover rounded-xl px-4 py-3 flex items-center gap-3 transition-all hover:translate-x-1">
+            <i class="fa-brands fa-github text-slate-200 w-5"></i>
+            <span class="text-sm font-medium">GitHub</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="grid sm:grid-cols-3 gap-5 pb-24">
+    <div class="fade-up glass rounded-3xl p-7" style="animation-delay: 100ms">
+      <div class="h-12 w-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center text-indigo-400 text-xl mb-5">
+        <i class="fa-solid fa-chart-simple"></i>
+      </div>
+      <h3 class="font-bold text-lg mb-2">Click analytics</h3>
+      <p class="text-sm text-slate-400 leading-relaxed">
+        Track every click in real time with a live chart. Know which links your audience actually cares about.
+      </p>
+    </div>
+
+    <div class="fade-up glass rounded-3xl p-7" style="animation-delay: 200ms">
+      <div class="h-12 w-12 rounded-2xl bg-purple-500/15 border border-purple-500/25 flex items-center justify-center text-purple-400 text-xl mb-5">
+        <i class="fa-solid fa-palette"></i>
+      </div>
+      <h3 class="font-bold text-lg mb-2">Your style</h3>
+      <p class="text-sm text-slate-400 leading-relaxed">
+        Pick your accent color and background theme. Your page, your vibe — it takes ten seconds.
+      </p>
+    </div>
+
+    <div class="fade-up glass rounded-3xl p-7" style="animation-delay: 300ms">
+      <div class="h-12 w-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/25 flex items-center justify-center text-cyan-400 text-xl mb-5">
+        <i class="fa-solid fa-qrcode"></i>
+      </div>
+      <h3 class="font-bold text-lg mb-2">Instant QR code</h3>
+      <p class="text-sm text-slate-400 leading-relaxed">
+        Every page comes with a scannable QR code. Perfect for resumes, posters, and business cards.
+      </p>
+    </div>
+  </section>
+
+  <!-- CTA band -->
+  <section class="fade-up glass rounded-3xl p-10 text-center mb-16">
+    <h2 class="text-2xl sm:text-3xl font-black mb-3">
+      Ready to share <span class="gradient-text">everything</span>?
+    </h2>
+    <p class="text-slate-400 mb-7">Set up your page in under a minute.</p>
+    <a href="{% url 'register' %}"
+      class="btn-gradient inline-block rounded-2xl px-8 py-4 text-base font-bold text-white">
+      Create your free page
+    </a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/5 py-8 text-center text-sm text-slate-500">
+    LinkHub — built with Django · a link-in-bio project
+  </footer>
+</div>
+{% endblock %}

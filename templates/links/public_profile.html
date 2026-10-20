@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }} · LinkHub{% endblock %}
+
+{% block content %}
+<style>
+  :root { --accent: {{ profile_user.profile.accent_color }}; }
+
+  .page-bg-dark    { background: #020617; }
+  .page-bg-aurora  { background: linear-gradient(160deg, #020617 0%, #1e1b4b 45%, #0f172a 100%); }
+  .page-bg-sunset  { background: linear-gradient(160deg, #020617 0%, #431407 50%, #1e1b4b 100%); }
+  .page-bg-ocean   { background: linear-gradient(160deg, #020617 0%, #082f49 50%, #0f172a 100%); }
+
+  .accent-icon { color: var(--accent); }
+
+  .link-glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .link-glass:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: var(--accent);
+    box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 30%, transparent);
+    transform: translateY(-2px) scale(1.015);
+  }
+  .link-glass:active { transform: translateY(0) scale(0.99); }
+  .link-glass:hover .link-arrow { color: var(--accent); transform: translateX(3px); }
+  .link-arrow { transition: all 0.22s ease; }
+
+  .avatar-ring {
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 32px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+</style>
+
+<div class="min-h-screen page-bg-{{ profile_user.profile.bg_style }} relative">
+  <div class="aurora-bg" style="opacity: 0.5;">
+    <div class="aurora-blob aurora-blob-1"></div>
+    <div class="aurora-blob aurora-blob-2"></div>
+  </div>
+
+  <div class="relative max-w-md mx-auto py-14 px-4">
+
+    <!-- Header -->
+    <div class="text-center mb-9 fade-up">
+      {% if profile_user.profile.avatar %}
+      <img src="{{ profile_user.profile.avatar.url }}" alt="{{ profile_user.username }} avatar"
+        class="mx-auto h-24 w-24 rounded-full object-cover avatar-ring shadow-2xl mb-4">
+      {% else %}
+      <div class="mx-auto h-24 w-24 rounded-full avatar-ring bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-4xl font-bold shadow-2xl mb-4">
+        {{ profile_user.username|first|upper }}
+      </div>
+      {% endif %}
+
+      <h1 class="text-2xl font-extrabold tracking-tight">@{{ profile_user.username }}</h1>
+
+      {% if profile_user.profile.bio %}
+      <p class="text-slate-400 mt-2 text-sm leading-relaxed max-w-xs mx-auto">{{ profile_user.profile.bio }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Links -->
+    <div class="space-y-3.5">
+      {% for link in links %}
+      <a href="{% url 'go' link.id %}" target="_blank" rel="noopener"
+        class="link-glass fade-up flex items-center gap-4 rounded-2xl px-5 py-4"
+        style="animation-delay: {{ forloop.counter0 }}90ms; animation-fill-mode: both;">
+        <div class="h-11 w-11 shrink-0 rounded-xl bg-white/5 flex items-center justify-center">
+          <i class="fa-brands {{ link.icon_class }} {{ link.icon_color }} text-lg"></i>
+        </div>
+        <span class="flex-1 font-semibold text-left">{{ link.title }}</span>
+        <i class="fa-solid fa-arrow-right link-arrow text-slate-600"></i>
+      </a>
+      {% empty %}
+      <div class="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-12 text-center fade-up">
+        <i class="fa-solid fa-link text-3xl text-slate-700 mb-3"></i>
+        <p class="text-slate-400 font-medium">Nothing here yet</p>
+        <p class="text-sm text-slate-600 mt-1">{{ profile_user.username }} hasn't added any links.</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-14 fade-up" style="animation-delay: 500ms;">
+      <a href="{% url 'landing' %}" class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 transition-colors">
+        <i class="fa-solid fa-link text-xs accent-icon"></i>
+        <span>Powered by <span class="font-semibold">LinkHub</span></span>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

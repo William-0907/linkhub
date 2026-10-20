@@ -1,0 +1,455 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard · LinkHub{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto py-12 px-4">
+
+  <!-- Top bar -->
+  <div class="flex items-center justify-between mb-8">
+    <a href="{% url 'landing' %}" class="inline-flex items-center gap-2 text-xl font-extrabold tracking-tight">
+      <i class="fa-solid fa-link text-indigo-400"></i>
+      <span>Link<span class="gradient-text">Hub</span></span>
+    </a>
+    <div class="flex items-center gap-2">
+      <a href="{% url 'profile' request.user.username %}" target="_blank"
+        class="glass glass-hover rounded-xl px-3 py-2 text-sm font-medium text-slate-300 transition-all">
+        <i class="fa-solid fa-arrow-up-right-from-square mr-1.5"></i>View page
+      </a>
+      <a href="{% url 'password_change' %}"
+        class="glass glass-hover rounded-xl px-3 py-2 text-sm text-slate-400 hover:text-slate-200 transition-all"
+        title="Change password">
+        <i class="fa-solid fa-gear"></i>
+      </a>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit"
+          class="glass glass-hover rounded-xl px-3 py-2 text-sm text-slate-400 hover:text-slate-200 transition-all"
+          title="Sign out">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Profile card -->
+  <div class="glass rounded-3xl p-6 mb-6">
+    <div class="flex items-center gap-4">
+      {% if request.user.profile.avatar %}
+      <img src="{{ request.user.profile.avatar.url }}" alt="{{ request.user.username }} avatar"
+        class="h-16 w-16 rounded-full object-cover border-2 border-white/10 shadow-lg">
+      {% else %}
+      <div class="h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+        {{ request.user.username|first|upper }}
+      </div>
+      {% endif %}
+      <div class="min-w-0 flex-1">
+        <h1 class="text-lg font-bold truncate">{{ request.user.username }}</h1>
+        <p class="text-sm text-slate-400 truncate">{{ request.user.profile.bio|default:"No bio yet." }}</p>
+      </div>
+      <button type="button" onclick="toggleProfileForm()"
+        class="shrink-0 glass glass-hover rounded-xl px-3 py-2 text-sm font-medium text-slate-300 transition-all">
+        <i class="fa-solid fa-pen mr-1"></i>Edit
+      </button>
+    </div>
+
+    <!-- Profile edit form -->
+    <form id="profile-form" method="post" action="{% url 'profile_update' %}" enctype="multipart/form-data"
+      class="hidden mt-5 pt-5 border-t border-white/10 space-y-5">
+      {% csrf_token %}
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">Bio</label>
+        {{ profile_form.bio }}
+        {% for error in profile_form.bio.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">Profile picture</label>
+        {{ profile_form.avatar }}
+        {% for error in profile_form.avatar.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1.5">Accent color</label>
+          {{ profile_form.accent_color }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1.5">Background</label>
+          <div class="flex gap-2">
+            {% for value, label in profile_form.bg_style.field.choices %}
+            <label class="cursor-pointer" title="{{ label }}">
+              <input type="radio" name="bg_style" value="{{ value }}"
+                {% if profile_form.bg_style.value == value %}checked{% endif %} class="peer sr-only">
+              <span class="block h-9 w-9 rounded-xl border-2 border-white/10 peer-checked:border-indigo-400 peer-checked:ring-2 peer-checked:ring-indigo-400/40 transition-all
+                {% if value == 'dark' %}bg-slate-950
+                {% elif value == 'aurora' %}bg-gradient-to-br from-indigo-600 to-purple-600
+                {% elif value == 'sunset' %}bg-gradient-to-br from-orange-500 to-pink-600
+                {% elif value == 'ocean' %}bg-gradient-to-br from-cyan-500 to-blue-700{% endif %}"></span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="submit"
+          class="btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white">
+          Save profile
+        </button>
+        <button type="button" onclick="toggleProfileForm()"
+          class="glass glass-hover rounded-xl px-4 py-2 text-sm font-medium text-slate-400 transition-all">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Analytics chart -->
+  <div class="glass rounded-3xl p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-bold">Clicks <span class="text-slate-500 font-medium text-sm">· last 14 days</span></h2>
+      <div class="flex items-center gap-4">
+        <div class="text-right">
+          <p class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Links</p>
+          <p class="text-lg font-bold">{{ links|length }}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Total clicks</p>
+          <p class="text-lg font-bold text-indigo-400">{{ total_clicks }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="h-40">
+      <canvas id="clicks-chart"></canvas>
+    </div>
+
+    {% if links %}
+    <div class="mt-5 pt-4 border-t border-white/10 space-y-2">
+      {% for link in links %}
+      {% if total_clicks > 0 %}
+      {% widthratio link.clicks total_clicks 100 as pct %}
+      {% else %}
+      {% widthratio 0 1 0 as pct %}
+      {% endif %}
+      <div class="flex items-center gap-3 text-sm">
+        <i class="fa-brands {{ link.icon_class }} {{ link.icon_color }} w-5 text-center"></i>
+        <span class="flex-1 truncate font-medium">{{ link.title }}</span>
+        <div class="w-24 h-1.5 rounded-full bg-white/5 overflow-hidden">
+          <div class="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"
+            style="width: {% widthratio link.clicks total_clicks 100 %}%"></div>
+        </div>
+        <span class="w-16 text-right text-slate-400 tabular-nums">{{ link.clicks }} clicks</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- QR code -->
+  <div class="glass rounded-3xl p-6 mb-6">
+    <div class="flex items-center gap-5">
+      <div class="shrink-0 rounded-2xl bg-white p-2.5 shadow-lg">
+        <img src="{% url 'qr_code' request.user.username %}" alt="QR code for your page"
+          class="h-24 w-24">
+      </div>
+      <div class="min-w-0">
+        <h2 class="font-bold mb-1"><i class="fa-solid fa-qrcode mr-1.5 text-indigo-400"></i>Your QR code</h2>
+        <p class="text-sm text-slate-400 mb-3">Scanning opens your public page instantly.</p>
+        <a href="{% url 'qr_code' request.user.username %}" download="linkhub-{{ request.user.username }}-qr.png"
+          class="glass glass-hover inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-slate-200 transition-all">
+          <i class="fa-solid fa-download"></i>Download PNG
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Links section header -->
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="font-bold">Your links</h2>
+    <button type="button" onclick="openAddModal()"
+      class="btn-gradient rounded-xl px-4 py-2.5 text-sm font-semibold text-white">
+      <i class="fa-solid fa-plus mr-1.5"></i>Add link
+    </button>
+  </div>
+
+  <!-- Links list -->
+  <ul id="sortable-links" class="space-y-3 mb-8">
+    {% for link in links %}
+    <li draggable="true" data-id="{{ link.id }}"
+      class="link-item group flex items-center gap-3 glass glass-hover rounded-2xl px-4 py-3 cursor-grab active:cursor-grabbing transition-all">
+      <span class="drag-handle text-slate-600 hover:text-slate-400 transition-colors">
+        <i class="fa-solid fa-grip-vertical"></i>
+      </span>
+      <div class="h-10 w-10 shrink-0 rounded-xl bg-white/5 flex items-center justify-center">
+        <i class="fa-brands {{ link.icon_class }} {{ link.icon_color }}"></i>
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-semibold text-sm truncate">{{ link.title }}</p>
+        <p class="text-xs text-slate-500 truncate">{{ link.url }}</p>
+      </div>
+      <span class="shrink-0 rounded-lg bg-white/5 px-2 py-1 text-xs font-semibold text-slate-300"
+        title="{{ link.clicks }} clicks">
+        <i class="fa-solid fa-chart-simple mr-1 text-indigo-400"></i>{{ link.clicks }}
+      </span>
+      <div class="shrink-0 flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+        <button type="button"
+          onclick='openEditModal({{ link.id }}, "{{ link.title|escapejs }}", "{{ link.url|escapejs }}", "{{ link.platform }}")'
+          class="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-slate-200 transition-colors"
+          title="Edit">
+          <i class="fa-solid fa-pen text-xs"></i>
+        </button>
+        <form method="post" action="{% url 'link_delete' link.id %}"
+          onsubmit="return confirm('Delete {{ link.title|escapejs }}?')">
+          {% csrf_token %}
+          <button type="submit"
+            class="rounded-lg p-2 text-slate-400 hover:bg-red-950/60 hover:text-red-400 transition-colors"
+            title="Delete">
+            <i class="fa-solid fa-trash text-xs"></i>
+          </button>
+        </form>
+      </div>
+    </li>
+    {% empty %}
+    <li class="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-12 text-center">
+      <i class="fa-solid fa-link text-3xl text-slate-700 mb-3"></i>
+      <p class="text-slate-400 font-medium">No links yet</p>
+      <p class="text-sm text-slate-600 mt-1">Add your first link to get started.</p>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <p class="text-center text-xs text-slate-600">
+    Your public page:
+    <a href="{% url 'profile' request.user.username %}" target="_blank"
+      class="text-indigo-400 hover:text-indigo-300">linkhub/{{ request.user.username }}</a>
+  </p>
+</div>
+
+<!-- Add link modal -->
+<div id="add-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center px-4">
+  <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeAddModal()"></div>
+  <div class="relative w-full max-w-md glass rounded-3xl p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-bold">Add a new link</h2>
+      <button type="button" onclick="closeAddModal()"
+        class="rounded-lg p-2 text-slate-400 hover:bg-white/10 transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <form method="post" action="{% url 'link_create' %}" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">Title</label>
+        {{ link_form.title }}
+        {% for error in link_form.title.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">Destination URL</label>
+        {{ link_form.url }}
+        {% for error in link_form.url.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">Platform</label>
+        {{ link_form.platform }}
+        {% for error in link_form.platform.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <button type="submit"
+        class="btn-gradient w-full rounded-2xl px-4 py-3 font-semibold text-white">
+        Add link
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Edit link modal -->
+<div id="edit-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center px-4">
+  <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeEditModal()"></div>
+  <div class="relative w-full max-w-md glass rounded-3xl p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-bold">Edit link</h2>
+      <button type="button" onclick="closeEditModal()"
+        class="rounded-lg p-2 text-slate-400 hover:bg-white/10 transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <form id="edit-form" method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">Title</label>
+        <input type="text" name="title" id="edit-title" required maxlength="100"
+          class="w-full rounded-xl bg-slate-900/80 border border-white/10 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">Destination URL</label>
+        <input type="url" name="url" id="edit-url" required
+          class="w-full rounded-xl bg-slate-900/80 border border-white/10 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">Platform</label>
+        <select name="platform" id="edit-platform"
+          class="w-full rounded-xl bg-slate-900/80 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="website">Website</option>
+          <option value="youtube">YouTube</option>
+          <option value="instagram">Instagram</option>
+          <option value="github">GitHub</option>
+          <option value="x">X (Twitter)</option>
+          <option value="twitch">Twitch</option>
+          <option value="tiktok">TikTok</option>
+        </select>
+      </div>
+      <button type="submit"
+        class="btn-gradient w-full rounded-2xl px-4 py-3 font-semibold text-white">
+        Save changes
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  const chartLabels = {{ chart_labels|safe }};
+  const chartValues = {{ chart_values|safe }};
+
+  const ctx = document.getElementById('clicks-chart');
+  const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 160);
+  gradient.addColorStop(0, 'rgba(99, 102, 241, 0.35)');
+  gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartLabels,
+      datasets: [{
+        data: chartValues,
+        borderColor: '#818cf8',
+        backgroundColor: gradient,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#818cf8',
+        borderWidth: 2.5,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          borderWidth: 1,
+          cornerRadius: 12,
+          padding: 10,
+          displayColors: false,
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: 'rgb(100 116 139)', font: { size: 10 }, maxTicksLimit: 7 },
+          border: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          ticks: { color: 'rgb(100 116 139)', font: { size: 10 }, precision: 0 },
+          border: { display: false },
+        },
+      },
+    },
+  });
+
+  function toggleProfileForm() {
+    document.getElementById('profile-form').classList.toggle('hidden');
+  }
+
+  function openAddModal() {
+    document.getElementById('add-modal').classList.remove('hidden');
+  }
+  function closeAddModal() {
+    document.getElementById('add-modal').classList.add('hidden');
+  }
+
+  function openEditModal(id, title, url, platform) {
+    const form = document.getElementById('edit-form');
+    form.action = '/links/' + id + '/edit/';
+    document.getElementById('edit-title').value = title;
+    document.getElementById('edit-url').value = url;
+    document.getElementById('edit-platform').value = platform;
+    document.getElementById('edit-modal').classList.remove('hidden');
+  }
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+  }
+
+  // ---- Drag and drop reordering ----
+  const list = document.getElementById('sortable-links');
+  let draggedItem = null;
+
+  list.addEventListener('dragstart', (e) => {
+    const item = e.target.closest('.link-item');
+    if (!item) return;
+    draggedItem = item;
+    item.classList.add('dragging');
+  });
+
+  list.addEventListener('dragend', (e) => {
+    const item = e.target.closest('.link-item');
+    if (item) item.classList.remove('dragging');
+    document.querySelectorAll('.link-item').forEach(el => el.classList.remove('drag-over'));
+    if (draggedItem) saveOrder();
+    draggedItem = null;
+  });
+
+  list.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(list, e.clientY);
+    document.querySelectorAll('.link-item').forEach(el => el.classList.remove('drag-over'));
+    if (afterElement) {
+      afterElement.classList.add('drag-over');
+      list.insertBefore(draggedItem, afterElement);
+    } else {
+      list.appendChild(draggedItem);
+    }
+  });
+
+  function getDragAfterElement(container, y) {
+    const elements = [...container.querySelectorAll('.link-item:not(.dragging)')];
+    return elements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      }
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+
+  function saveOrder() {
+    const ids = [...list.querySelectorAll('.link-item')].map(el => el.dataset.id);
+    fetch("{% url 'link_reorder' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({ order: ids }),
+    });
+  }
+</script>
+{% endblock %}
